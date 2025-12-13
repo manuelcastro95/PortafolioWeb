@@ -18,9 +18,9 @@ class AdminUserSeeder extends Seeder
 
         if (!$adminExists) {
             User::create([
-                'name' => 'Administrador',
-                'email' => 'admin@portafolio.com',
-                'password' => Hash::make('admin123'),
+                'name' => 'Manuel Castro',
+                'email' => 'manuelcastro911@gmail.com',
+                'password' => Hash::make(':uBi6JCdLZy-B7W'),
                 'email_verified_at' => now(),
                 'bio' => 'Desarrollador FullStack con más de 3 años de experiencia especializado en el diseño e implementación de soluciones web empresariales.',
                 'phone' => '+57 317 250 1811',
