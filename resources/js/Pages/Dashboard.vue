@@ -197,6 +197,41 @@ const props = defineProps({
                         </div>
                     </Link>
 
+                    <!-- Analytics - Small Card -->
+                    <Link
+                        :href="route('admin.analytics.index')"
+                        class="
+                            group relative
+                            bg-gradient-to-br from-purple-500 to-pink-500
+                            rounded-3xl
+                            p-6
+                            shadow-lg hover:shadow-2xl
+                            transition-all duration-300
+                            hover:-translate-y-1
+                            overflow-hidden
+                        "
+                    >
+                        <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        <div class="relative z-10 text-white">
+                            <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4 group-hover:bg-white/30 transition-colors backdrop-blur-sm">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                            
+                            <h2 class="text-xl font-bold mb-1">Analytics</h2>
+                            <p class="text-white/90 text-sm">Seguimiento de visitantes</p>
+                            
+                            <div class="mt-4 flex items-center text-sm font-medium">
+                                <span>Ver estadísticas</span>
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </Link>
+
                     <!-- Ver Portfolio - Small Card -->
                     <Link
                         :href="route('portfolio.index')"

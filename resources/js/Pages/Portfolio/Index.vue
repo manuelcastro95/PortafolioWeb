@@ -249,6 +249,7 @@
                                 v-if="proyecto.link"
                                 :href="proyecto.link"
                                 target="_blank"
+                                @click="handleProjectClick(proyecto, 'demo')"
                                 class="
                                     flex items-center gap-2
                                     text-accent hover:text-primary
@@ -265,6 +266,7 @@
                                 v-if="proyecto.github"
                                 :href="proyecto.github"
                                 target="_blank"
+                                @click="handleProjectClick(proyecto, 'github')"
                                 class="
                                     flex items-center gap-2
                                     text-accent hover:text-primary
@@ -303,6 +305,7 @@
                 <a 
                     v-if="user?.email"
                     :href="`mailto:${user.email}`" 
+                    @click="handleContactClick('email', `mailto:${user.email}`)"
                     class="
                         group relative
                         bg-gradient-to-br from-primary/10 to-primary/5
@@ -328,6 +331,7 @@
                     v-if="user?.linkedin_url"
                     :href="user.linkedin_url" 
                     target="_blank"
+                    @click="handleContactClick('linkedin', user.linkedin_url)"
                     class="
                         group relative
                         bg-gradient-to-br from-accent/10 to-accent/5
@@ -353,6 +357,7 @@
                     v-if="user?.github_url"
                     :href="user.github_url" 
                     target="_blank"
+                    @click="handleContactClick('github', user.github_url)"
                     class="
                         group relative
                         bg-gradient-to-br from-secondary/10 to-secondary/5
@@ -378,6 +383,7 @@
                     v-if="user?.whatsapp"
                     :href="`https://wa.me/${user.whatsapp.replace(/[^0-9]/g, '')}`" 
                     target="_blank"
+                    @click="handleContactClick('whatsapp', `https://wa.me/${user.whatsapp.replace(/[^0-9]/g, '')}`)"
                     class="
                         group relative
                         bg-gradient-to-br from-green-100 to-green-50
@@ -409,16 +415,26 @@
 
 <script setup>
 import { Head } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 import Navbar from '@/Components/Portfolio/Navbar.vue';
 import TypeWriter from '@/Components/Portfolio/TypeWriter.vue';
 import ProjectCarousel from '@/Components/Portfolio/ProjectCarousel.vue';
 import ExperienceItem from '@/Components/Portfolio/ExperienceItem.vue';
+import { useAnalytics } from '@/composables/useAnalytics';
 
-defineProps({
+const props = defineProps({
     user: Object,
     projects: Array,
     skills: Array,
     experiences: Array,
+});
+
+const analytics = useAnalytics();
+const { trackPageView, trackProjectClick, trackContactClick } = analytics;
+
+// Trackear vista de página al cargar
+onMounted(() => {
+    trackPageView('portfolio');
 });
 
 const getImageUrl = (path) => {
@@ -429,5 +445,14 @@ const getImageUrl = (path) => {
         return `${import.meta.env.VITE_AWS_URL}/${path}`;
     }
     return `${baseUrl}/storage/${path}`;
+};
+
+const handleProjectClick = (project, linkType) => {
+    const url = linkType === 'demo' ? project.link : project.github;
+    trackProjectClick(project.title, linkType, url);
+};
+
+const handleContactClick = (contactType, url) => {
+    trackContactClick(contactType, url);
 };
 </script>

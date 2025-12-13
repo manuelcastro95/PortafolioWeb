@@ -16,6 +16,7 @@
                     v-for="item in menuItems"
                     :key="item"
                     :href="`#${item}`"
+                    @click="handleMenuClick(item)"
                     class="
                         relative px-2 py-1
                         text-dark capitalize font-medium
@@ -69,6 +70,7 @@
                 <li v-for="item in menuItems" :key="item">
                     <a 
                         :href="`#${item}`" 
+                        @click="handleMenuClick(item)"
                         class="
                             text-dark capitalize font-medium
                             hover:text-primary transition-colors duration-300
@@ -105,13 +107,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import CvModal from './CvModal.vue';
+import { useAnalytics } from '@/composables/useAnalytics';
 
 const props = defineProps({
     user: Object,
 });
 
+const { trackMenuClick, trackCvView } = useAnalytics();
 const menuItems = ['inicio', 'habilidades', 'experiencia', 'proyectos', 'contacto'];
 const isOpen = ref(false);
 const showCvModal = ref(false);
@@ -119,6 +123,13 @@ const showCvModal = ref(false);
 const toggleMenu = () => {
     isOpen.value = !isOpen.value;
 };
+
+// Trackear cuando se abre el modal de CV
+watch(showCvModal, (newVal) => {
+    if (newVal) {
+        trackCvView();
+    }
+});
 
 const getCvUrl = () => {
     if (!props.user?.cv_file && !props.user?.cv_file_url) return '#';
@@ -134,6 +145,10 @@ const getCvUrl = () => {
         return `${import.meta.env.VITE_AWS_URL}/${props.user.cv_file}`;
     }
     return `${baseUrl}/storage/${props.user.cv_file}`;
+};
+
+const handleMenuClick = (item) => {
+    trackMenuClick(item);
 };
 </script>
 

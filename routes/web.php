@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SkillController;
 use App\Http\Controllers\Admin\ExperienceController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Admin\AnalyticsController as AdminAnalyticsController;
+use App\Http\Controllers\Api\AnalyticsController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,6 +25,9 @@ use Inertia\Inertia;
 
 // Public routes
 Route::get('/', [PortfolioController::class, 'index'])->name('portfolio.index');
+
+// Analytics API (public, no requiere autenticación)
+Route::post('/api/analytics/track', [AnalyticsController::class, 'track'])->name('api.analytics.track');
 
 // Auth routes
 Route::get('/dashboard', function () {
@@ -78,6 +83,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::post('/experiences', [ExperienceController::class, 'store'])->name('experiences.store');
     Route::match(['patch', 'post'], '/experiences/{experience}', [ExperienceController::class, 'update'])->name('experiences.update');
     Route::delete('/experiences/{experience}', [ExperienceController::class, 'destroy'])->name('experiences.destroy');
+    
+    // Analytics
+    Route::get('/analytics', [AdminAnalyticsController::class, 'index'])->name('analytics.index');
 });
 
 require __DIR__.'/auth.php';

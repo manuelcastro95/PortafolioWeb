@@ -84,6 +84,8 @@
 </template>
 
 <script setup>
+import { useAnalytics } from '@/composables/useAnalytics';
+
 const props = defineProps({
     isOpen: {
         type: Boolean,
@@ -96,12 +98,16 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+const { trackCvDownload } = useAnalytics();
 
 const close = () => {
     emit('close');
 };
 
 const downloadCv = () => {
+    // Trackear descarga
+    trackCvDownload(props.cvUrl);
+    
     // Crear un enlace temporal para descargar el archivo sin abrir nueva página
     const link = document.createElement('a');
     link.href = props.cvUrl;
