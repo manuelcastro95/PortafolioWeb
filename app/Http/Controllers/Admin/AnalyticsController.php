@@ -52,15 +52,27 @@ class AnalyticsController extends Controller
             ->orderBy('count', 'desc')
             ->get();
 
-        // Eventos por día (últimos 7 días)
+        // Eventos por día - ajustar según el período seleccionado
+        $chartDays = min($days, 30); // Máximo 30 días para el gráfico
         $eventsByDay = Analytics::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('count(*) as count')
             )
-            ->where('created_at', '>=', now()->subDays(7))
+            ->where('created_at', '>=', now()->subDays($chartDays))
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
+
+        // Completar días faltantes con 0
+        $eventsByDayMap = $eventsByDay->pluck('count', 'date')->toArray();
+        $completeEventsByDay = [];
+        for ($i = $chartDays - 1; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $completeEventsByDay[] = [
+                'date' => $date,
+                'count' => $eventsByDayMap[$date] ?? 0,
+            ];
+        }
 
         // Dispositivos
         $devices = Analytics::select('device_type', DB::raw('count(*) as count'))
@@ -78,6 +90,53 @@ class AnalyticsController extends Controller
             ->orderBy('count', 'desc')
             ->limit(5)
             ->get();
+
+        // Sistemas operativos
+        $operatingSystems = Analytics::select('os', DB::raw('count(*) as count'))
+            ->whereNotNull('os')
+            ->dateRange($startDate, $endDate)
+            ->groupBy('os')
+            ->orderBy('count', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Fuentes de tráfico (Referrers)
+        $referrers = Analytics::select('referrer', DB::raw('count(*) as count'))
+            ->whereNotNull('referrer')
+            ->where('referrer', '!=', '')
+            ->dateRange($startDate, $endDate)
+            ->groupBy('referrer')
+            ->orderBy('count', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($item) {
+                // Limpiar y formatear el referrer
+                $referrer = $item->referrer;
+                if (filter_var($referrer, FILTER_VALIDATE_URL)) {
+                    $parsed = parse_url($referrer);
+                    $domain = $parsed['host'] ?? $referrer;
+                    // Remover www.
+                    $domain = preg_replace('/^www\./', '', $domain);
+                    return [
+                        'referrer' => $domain,
+                        'full_url' => $referrer,
+                        'count' => $item->count,
+                    ];
+                }
+                return [
+                    'referrer' => $referrer,
+                    'full_url' => $referrer,
+                    'count' => $item->count,
+                ];
+            });
+
+        // Tráfico directo (sin referrer)
+        $directTraffic = Analytics::where(function($query) {
+                $query->whereNull('referrer')
+                    ->orWhere('referrer', '');
+            })
+            ->dateRange($startDate, $endDate)
+            ->count();
 
         // Eventos de CV
         $cvViews = Analytics::where('event_name', 'cv_view')
@@ -114,12 +173,15 @@ class AnalyticsController extends Controller
                 'project_clicks' => $projectClicks,
                 'contact_clicks' => $contactClicks,
                 'menu_clicks' => $menuClicks,
+                'direct_traffic' => $directTraffic,
             ],
             'topEvents' => $topEvents,
             'eventsBySection' => $eventsBySection,
-            'eventsByDay' => $eventsByDay,
+            'eventsByDay' => $completeEventsByDay,
             'devices' => $devices,
             'browsers' => $browsers,
+            'operatingSystems' => $operatingSystems,
+            'referrers' => $referrers,
             'days' => $days,
         ]);
     }

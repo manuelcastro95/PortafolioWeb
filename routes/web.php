@@ -70,7 +70,12 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::match(['patch', 'post'], '/profile', [AdminProfileController::class, 'update'])->name('profile.update');
     
     // Projects
-    Route::resource('projects', ProjectController::class);
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
+    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+    Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
+    Route::match(['put', 'patch', 'post'], '/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     
     // Skills
     Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');

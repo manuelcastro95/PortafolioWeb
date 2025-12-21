@@ -12,20 +12,40 @@
                         </div>
 
                         <form @submit.prevent="submit" class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Título</label>
-                                <input
-                                    v-model="form.title"
-                                    type="text"
-                                    class="
-                                        w-full px-4 py-3 rounded-xl
-                                        border border-gray-300
-                                        focus:border-primary focus:ring-2 focus:ring-primary/20
-                                        transition-all duration-200
-                                    "
-                                    required
-                                />
-                                <div v-if="errors.title" class="text-red-600 text-sm mt-1">{{ errors.title }}</div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Título</label>
+                                    <input
+                                        v-model="form.title"
+                                        type="text"
+                                        class="
+                                            w-full px-4 py-3 rounded-xl
+                                            border border-gray-300
+                                            focus:border-primary focus:ring-2 focus:ring-primary/20
+                                            transition-all duration-200
+                                        "
+                                        required
+                                    />
+                                    <div v-if="errors.title" class="text-red-600 text-sm mt-1">{{ errors.title }}</div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo</label>
+                                    <select
+                                        v-model="form.type"
+                                        class="
+                                            w-full px-4 py-3 rounded-xl
+                                            border border-gray-300
+                                            focus:border-primary focus:ring-2 focus:ring-primary/20
+                                            transition-all duration-200
+                                        "
+                                        required
+                                    >
+                                        <option value="proyecto">Proyecto</option>
+                                        <option value="colaboracion">Colaboración</option>
+                                    </select>
+                                    <div v-if="errors.type" class="text-red-600 text-sm mt-1">{{ errors.type }}</div>
+                                </div>
                             </div>
 
                             <div>
@@ -235,12 +255,13 @@ const props = defineProps({
 });
 
 const form = useForm({
-    title: props.project.title,
-    description: props.project.description,
+    title: props.project.title || '',
+    type: props.project.type || 'proyecto',
+    description: props.project.description || '',
     link: props.project.link || '',
     github: props.project.github || '',
-    order: props.project.order,
-    is_active: props.project.is_active,
+    order: props.project.order || 0,
+    is_active: props.project.is_active !== undefined ? props.project.is_active : true,
     skills: props.project.skills?.map(s => s.id) || [],
     images: [],
     delete_images: [],
@@ -269,9 +290,44 @@ const getImageUrl = (path) => {
 };
 
 const submit = () => {
-    form.post(route('admin.projects.update', props.project.id), {
-        forceFormData: true,
-    });
+    // Asegurar que los campos requeridos tengan valores
+    if (!form.title || form.title.trim() === '') {
+        form.setError('title', 'El título es requerido');
+        return;
+    }
+    if (!form.type) {
+        form.setError('type', 'El tipo es requerido');
+        return;
+    }
+    if (!form.description || form.description.trim() === '') {
+        form.setError('description', 'La descripción es requerida');
+        return;
+    }
+    
+    // Limpiar errores previos
+    form.clearErrors();
+    
+    // Asegurar que los arrays estén definidos
+    if (!form.skills) form.skills = [];
+    if (!form.images) form.images = [];
+    if (!form.delete_images) form.delete_images = [];
+    
+    // Verificar si hay archivos para enviar
+    const hasFiles = form.images && form.images.length > 0;
+    
+    if (hasFiles) {
+        // Si hay archivos, usar POST con _method y forceFormData
+        form._method = 'PUT';
+        form.post(route('admin.projects.update', props.project.id), {
+            forceFormData: true,
+            preserveScroll: true,
+        });
+    } else {
+        // Si no hay archivos, usar PUT directamente (más eficiente)
+        form.put(route('admin.projects.update', props.project.id), {
+            preserveScroll: true,
+        });
+    }
 };
 </script>
 

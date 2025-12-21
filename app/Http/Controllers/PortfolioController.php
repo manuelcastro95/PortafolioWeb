@@ -22,7 +22,7 @@ class PortfolioController extends Controller
             $user = $userData;
         }
         
-        $projects = Project::with(['images', 'skills'])
+        $allProjects = Project::with(['images', 'skills'])
             ->where('is_active', true)
             ->orderBy('order')
             ->get()
@@ -35,6 +35,10 @@ class PortfolioController extends Controller
                 })->toArray();
                 return $projectData;
             });
+        
+        $projects = $allProjects->where('type', 'proyecto')->values();
+        $collaborations = $allProjects->where('type', 'colaboracion')->values();
+        
         $skills = Skill::where('is_active', true)
             ->orderBy('order')
             ->get()
@@ -50,6 +54,7 @@ class PortfolioController extends Controller
         return Inertia::render('Portfolio/Index', [
             'user' => $user,
             'projects' => $projects,
+            'collaborations' => $collaborations,
             'skills' => $skills,
             'experiences' => $experiences,
         ]);

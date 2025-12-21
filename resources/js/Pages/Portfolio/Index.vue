@@ -192,98 +192,224 @@
         <section id="proyectos" class="container mx-auto px-4 py-12 sm:py-16 lg:py-20">
             <div class="mb-8 sm:mb-12 text-center">
                 <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-dark mb-4">
-                    Proyectos
+                    Proyectos y Colaboraciones
                 </h2>
                 <p class="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
-                    Explora algunos de mis proyectos más destacados
+                    Explora algunos de mis proyectos más destacados y colaboraciones en proyectos de otros desarrolladores
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                <div 
-                    v-for="(proyecto, index) in projects"
-                    :key="index" 
-                    :class="[
-                        'group relative rounded-2xl overflow-hidden',
-                        'shadow-lg hover:shadow-2xl transform transition-all duration-300',
-                        'hover:-translate-y-2 border border-gray-100',
-                        index % 3 === 0 ? 'bg-gradient-to-br from-white to-primary/5' :
-                        index % 3 === 1 ? 'bg-white' :
-                        'bg-gradient-to-br from-white to-accent/5'
-                    ]"
-                >
-                    <!-- Image Section -->
-                    <div class="relative h-48 sm:h-56 lg:h-64 overflow-hidden bg-gray-100">
-                        <ProjectCarousel :images="proyecto.images" />
-                        <div class="
-                            absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent
-                            opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                            flex items-end p-6
-                        ">
-                            <p class="text-white text-sm leading-relaxed">{{ proyecto.description }}</p>
-                        </div>
-                    </div>
+            <!-- Proyectos -->
+            <div class="mb-12 sm:mb-16">
+                <div class="mb-6 sm:mb-8 text-center">
+                    <h3 class="text-2xl sm:text-3xl font-bold text-dark mb-2">
+                        Proyectos
+                    </h3>
+                    <p class="text-sm sm:text-base text-gray-600">
+                        Proyectos propios que he desarrollado
+                    </p>
+                </div>
 
-                    <!-- Content Section -->
-                    <div class="p-5 sm:p-6">
-                        <h3 class="text-xl sm:text-2xl font-bold text-dark mb-3">{{ proyecto.title }}</h3>
-                        
-                        <!-- Skills Tags -->
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span 
-                                v-for="skill in proyecto.skills" 
-                                :key="skill.id"
-                                class="
-                                    px-3 py-1 text-xs font-medium
-                                    bg-primary/10 text-primary
-                                    rounded-full
-                                "
-                            >
-                                {{ skill.name }}
-                            </span>
+                <div v-if="projects.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                    <div 
+                        v-for="(proyecto, index) in projects"
+                        :key="index" 
+                        @click="openProjectModal(proyecto)"
+                        :class="[
+                            'group relative rounded-2xl overflow-hidden',
+                            'shadow-lg hover:shadow-2xl transform transition-all duration-300',
+                            'hover:-translate-y-2 border border-gray-100',
+                            'cursor-pointer',
+                            index % 3 === 0 ? 'bg-gradient-to-br from-white to-primary/5' :
+                            index % 3 === 1 ? 'bg-white' :
+                            'bg-gradient-to-br from-white to-accent/5'
+                        ]"
+                    >
+                        <!-- Image Section -->
+                        <div class="relative h-48 sm:h-56 lg:h-64 overflow-hidden bg-gray-100">
+                            <ProjectCarousel :images="proyecto.images" />
+                            <div class="
+                                absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent
+                                opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                flex items-end p-6
+                            ">
+                                <p class="text-white text-sm leading-relaxed">{{ proyecto.description }}</p>
+                            </div>
                         </div>
 
-                        <!-- Links -->
-                        <div class="flex justify-end gap-4 pt-4 border-t border-gray-100">
-                            <a 
-                                v-if="proyecto.link"
-                                :href="proyecto.link"
-                                target="_blank"
-                                @click="handleProjectClick(proyecto, 'demo')"
-                                class="
-                                    flex items-center gap-2
-                                    text-accent hover:text-primary
-                                    transition-colors duration-300
-                                    font-medium text-sm
-                                "
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                                Demo
-                            </a>
-                            <a 
-                                v-if="proyecto.github"
-                                :href="proyecto.github"
-                                target="_blank"
-                                @click="handleProjectClick(proyecto, 'github')"
-                                class="
-                                    flex items-center gap-2
-                                    text-accent hover:text-primary
-                                    transition-colors duration-300
-                                    font-medium text-sm
-                                "
-                            >
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                                </svg>
-                                Código
-                            </a>
+                        <!-- Content Section -->
+                        <div class="p-5 sm:p-6">
+                            <h3 class="text-xl sm:text-2xl font-bold text-dark mb-3">{{ proyecto.title }}</h3>
+                            
+                            <!-- Skills Tags -->
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span 
+                                    v-for="skill in proyecto.skills" 
+                                    :key="skill.id"
+                                    class="
+                                        px-3 py-1 text-xs font-medium
+                                        bg-primary/10 text-primary
+                                        rounded-full
+                                    "
+                                >
+                                    {{ skill.name }}
+                                </span>
+                            </div>
+
+                            <!-- Links -->
+                            <div class="flex justify-end gap-4 pt-4 border-t border-gray-100" @click.stop>
+                                <a 
+                                    v-if="proyecto.link"
+                                    :href="proyecto.link"
+                                    target="_blank"
+                                    @click="handleProjectClick(proyecto, 'demo')"
+                                    class="
+                                        flex items-center gap-2
+                                        text-accent hover:text-primary
+                                        transition-colors duration-300
+                                        font-medium text-sm
+                                    "
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    Demo
+                                </a>
+                                <a 
+                                    v-if="proyecto.github"
+                                    :href="proyecto.github"
+                                    target="_blank"
+                                    @click="handleProjectClick(proyecto, 'github')"
+                                    class="
+                                        flex items-center gap-2
+                                        text-accent hover:text-primary
+                                        transition-colors duration-300
+                                        font-medium text-sm
+                                    "
+                                >
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                    </svg>
+                                    Código
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div v-else class="text-center py-12">
+                    <p class="text-gray-600">No hay proyectos disponibles</p>
+                </div>
+            </div>
+
+            <!-- Colaboraciones -->
+            <div class="mt-16 sm:mt-20">
+                <div class="mb-6 sm:mb-8 text-center">
+                    <h3 class="text-2xl sm:text-3xl font-bold text-dark mb-2">
+                        Colaboraciones
+                    </h3>
+                    <p class="text-sm sm:text-base text-gray-600">
+                        Módulos y contribuciones en proyectos de otros desarrolladores
+                    </p>
+                </div>
+
+                <div v-if="collaborations.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                    <div 
+                        v-for="(colaboracion, index) in collaborations"
+                        :key="index" 
+                        @click="openProjectModal(colaboracion)"
+                        :class="[
+                            'group relative rounded-2xl overflow-hidden',
+                            'shadow-lg hover:shadow-2xl transform transition-all duration-300',
+                            'hover:-translate-y-2 border border-gray-100',
+                            'cursor-pointer',
+                            index % 3 === 0 ? 'bg-gradient-to-br from-white to-secondary/5' :
+                            index % 3 === 1 ? 'bg-white' :
+                            'bg-gradient-to-br from-white to-accent/5'
+                        ]"
+                    >
+                        <!-- Image Section -->
+                        <div class="relative h-48 sm:h-56 lg:h-64 overflow-hidden bg-gray-100">
+                            <ProjectCarousel :images="colaboracion.images" />
+                            <div class="
+                                absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent
+                                opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                flex items-end p-6
+                            ">
+                                <p class="text-white text-sm leading-relaxed">{{ colaboracion.description }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="p-5 sm:p-6">
+                            <h3 class="text-xl sm:text-2xl font-bold text-dark mb-3">{{ colaboracion.title }}</h3>
+                            
+                            <!-- Skills Tags -->
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span 
+                                    v-for="skill in colaboracion.skills" 
+                                    :key="skill.id"
+                                    class="
+                                        px-3 py-1 text-xs font-medium
+                                        bg-secondary/10 text-secondary
+                                        rounded-full
+                                    "
+                                >
+                                    {{ skill.name }}
+                                </span>
+                            </div>
+
+                            <!-- Links -->
+                            <div class="flex justify-end gap-4 pt-4 border-t border-gray-100" @click.stop>
+                                <a 
+                                    v-if="colaboracion.link"
+                                    :href="colaboracion.link"
+                                    target="_blank"
+                                    @click="handleProjectClick(colaboracion, 'demo')"
+                                    class="
+                                        flex items-center gap-2
+                                        text-accent hover:text-secondary
+                                        transition-colors duration-300
+                                        font-medium text-sm
+                                    "
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    Demo
+                                </a>
+                                <a 
+                                    v-if="colaboracion.github"
+                                    :href="colaboracion.github"
+                                    target="_blank"
+                                    @click="handleProjectClick(colaboracion, 'github')"
+                                    class="
+                                        flex items-center gap-2
+                                        text-accent hover:text-secondary
+                                        transition-colors duration-300
+                                        font-medium text-sm
+                                    "
+                                >
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                    </svg>
+                                    Código
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-else class="text-center py-12">
+                    <p class="text-gray-600">No hay colaboraciones disponibles</p>
+                </div>
             </div>
         </section>
+
+        <!-- Project Modal -->
+        <ProjectModal 
+            :isOpen="isModalOpen" 
+            :project="selectedProject"
+            @close="closeProjectModal"
+        />
 
         <!-- Contact Section - Colorful Bento Cards -->
         <section id="contacto" class="container mx-auto px-4 py-12 sm:py-16 lg:py-20">
@@ -415,16 +541,18 @@
 
 <script setup>
 import { Head } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import Navbar from '@/Components/Portfolio/Navbar.vue';
 import TypeWriter from '@/Components/Portfolio/TypeWriter.vue';
 import ProjectCarousel from '@/Components/Portfolio/ProjectCarousel.vue';
+import ProjectModal from '@/Components/Portfolio/ProjectModal.vue';
 import ExperienceItem from '@/Components/Portfolio/ExperienceItem.vue';
 import { useAnalytics } from '@/composables/useAnalytics';
 
 const props = defineProps({
     user: Object,
     projects: Array,
+    collaborations: Array,
     skills: Array,
     experiences: Array,
 });
@@ -432,10 +560,24 @@ const props = defineProps({
 const analytics = useAnalytics();
 const { trackPageView, trackProjectClick, trackContactClick } = analytics;
 
+// Modal state
+const isModalOpen = ref(false);
+const selectedProject = ref(null);
+
 // Trackear vista de página al cargar
 onMounted(() => {
     trackPageView('portfolio');
 });
+
+const openProjectModal = (project) => {
+    selectedProject.value = project;
+    isModalOpen.value = true;
+};
+
+const closeProjectModal = () => {
+    isModalOpen.value = false;
+    selectedProject.value = null;
+};
 
 const getImageUrl = (path) => {
     if (!path) return null;

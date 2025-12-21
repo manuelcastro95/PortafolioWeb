@@ -44,6 +44,7 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'type' => 'required|in:proyecto,colaboracion',
             'description' => 'required|string',
             'link' => 'nullable|url',
             'github' => 'nullable|url',
@@ -57,6 +58,7 @@ class ProjectController extends Controller
 
         $project = Project::create([
             'title' => $validated['title'],
+            'type' => $validated['type'],
             'description' => $validated['description'],
             'link' => $validated['link'] ?? null,
             'github' => $validated['github'] ?? null,
@@ -109,6 +111,7 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'type' => 'required|in:proyecto,colaboracion',
             'description' => 'required|string',
             'link' => 'nullable|url',
             'github' => 'nullable|url',
@@ -124,6 +127,7 @@ class ProjectController extends Controller
 
         $project->update([
             'title' => $validated['title'],
+            'type' => $validated['type'],
             'description' => $validated['description'],
             'link' => $validated['link'] ?? null,
             'github' => $validated['github'] ?? null,

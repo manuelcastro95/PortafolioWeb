@@ -70,7 +70,21 @@
 
                         <!-- Content -->
                         <div class="mb-4">
-                            <h3 class="text-xl font-bold text-dark mb-2 pr-16">{{ project.title }}</h3>
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-xl font-bold text-dark pr-16">{{ project.title }}</h3>
+                            </div>
+                            <div class="mb-2">
+                                <span
+                                    :class="[
+                                        project.type === 'proyecto'
+                                            ? 'bg-primary/10 text-primary border-primary/20'
+                                            : 'bg-secondary/10 text-secondary border-secondary/20',
+                                        'px-2 py-1 text-xs font-semibold rounded-full border'
+                                    ]"
+                                >
+                                    {{ project.type === 'proyecto' ? 'Proyecto' : 'Colaboración' }}
+                                </span>
+                            </div>
                             <p class="text-gray-600 text-sm line-clamp-2 mb-4">
                                 {{ project.description }}
                             </p>

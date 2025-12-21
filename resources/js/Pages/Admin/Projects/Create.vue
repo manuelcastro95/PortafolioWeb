@@ -12,21 +12,41 @@
                         </div>
 
                         <form @submit.prevent="submit" class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Título</label>
-                                <input
-                                    v-model="form.title"
-                                    type="text"
-                                    class="
-                                        w-full px-4 py-3 rounded-xl
-                                        border border-gray-300
-                                        focus:border-primary focus:ring-2 focus:ring-primary/20
-                                        transition-all duration-200
-                                    "
-                                    placeholder="Nombre del proyecto"
-                                    required
-                                />
-                                <div v-if="errors.title" class="text-red-600 text-sm mt-1">{{ errors.title }}</div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Título</label>
+                                    <input
+                                        v-model="form.title"
+                                        type="text"
+                                        class="
+                                            w-full px-4 py-3 rounded-xl
+                                            border border-gray-300
+                                            focus:border-primary focus:ring-2 focus:ring-primary/20
+                                            transition-all duration-200
+                                        "
+                                        placeholder="Nombre del proyecto"
+                                        required
+                                    />
+                                    <div v-if="errors.title" class="text-red-600 text-sm mt-1">{{ errors.title }}</div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo</label>
+                                    <select
+                                        v-model="form.type"
+                                        class="
+                                            w-full px-4 py-3 rounded-xl
+                                            border border-gray-300
+                                            focus:border-primary focus:ring-2 focus:ring-primary/20
+                                            transition-all duration-200
+                                        "
+                                        required
+                                    >
+                                        <option value="proyecto">Proyecto</option>
+                                        <option value="colaboracion">Colaboración</option>
+                                    </select>
+                                    <div v-if="errors.type" class="text-red-600 text-sm mt-1">{{ errors.type }}</div>
+                                </div>
                             </div>
 
                             <div>
@@ -206,6 +226,7 @@ const props = defineProps({
 
 const form = useForm({
     title: '',
+    type: 'proyecto',
     description: '',
     link: '',
     github: '',
