@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\SkillController;
 use App\Http\Controllers\Admin\ExperienceController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\AnalyticsController as AdminAnalyticsController;
+use App\Http\Controllers\Admin\ProposalController;
 use App\Http\Controllers\Api\AnalyticsController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -91,6 +92,20 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     
     // Analytics
     Route::get('/analytics', [AdminAnalyticsController::class, 'index'])->name('analytics.index');
+
+    // Proposals (Propuestas de Workana)
+    Route::get('/proposals', [ProposalController::class, 'index'])->name('proposals.index');
+    Route::get('/proposals/create', [ProposalController::class, 'create'])->name('proposals.create');
+    Route::post('/proposals', [ProposalController::class, 'store'])->name('proposals.store');
+    Route::get('/proposals/rate', [ProposalController::class, 'rate'])->name('proposals.rate');
+    Route::post('/proposals/scrape', [ProposalController::class, 'scrape'])->name('proposals.scrape');
+    Route::post('/proposals/settings', [ProposalController::class, 'updateSettings'])->name('proposals.settings');
+    Route::get('/proposals/{proposal}', [ProposalController::class, 'show'])->name('proposals.show');
+    Route::get('/proposals/{proposal}/edit', [ProposalController::class, 'edit'])->name('proposals.edit');
+    Route::patch('/proposals/{proposal}/status', [ProposalController::class, 'updateStatus'])->name('proposals.status');
+    Route::match(['put', 'patch'], '/proposals/{proposal}', [ProposalController::class, 'update'])->name('proposals.update');
+    Route::delete('/proposals/{proposal}', [ProposalController::class, 'destroy'])->name('proposals.destroy');
+    Route::get('/proposals/{proposal}/pdf', [ProposalController::class, 'pdf'])->name('proposals.pdf');
 });
 
 require __DIR__.'/auth.php';
