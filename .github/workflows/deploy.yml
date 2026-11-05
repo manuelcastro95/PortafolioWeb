@@ -48,7 +48,12 @@ jobs:
             echo "📥 Actualizando código"
             git fetch origin
             git checkout main
-            git pull origin main
+            # reset en lugar de pull: el servidor es un espejo de origin, no
+            # una copia donde se trabaje. Con pull, cualquier reescritura de
+            # historia deja las ramas divergidas y el deploy falla. Esto
+            # descarta cambios locales en el servidor, que es lo que se quiere
+            # en un destino de despliegue.
+            git reset --hard origin/main
 
             echo "📦 Backend"
             composer install --no-dev --optimize-autoloader
