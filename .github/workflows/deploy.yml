@@ -58,8 +58,17 @@ jobs:
             npm run build
 
             echo "🧹 Laravel optimize"
-            php artisan optimize:clear
-            php artisan optimize
+            # No se usa optimize:clear porque incluye cache:clear, que abre el
+            # store de caché. Si CACHE_DRIVER apunta a un backend que no está
+            # disponible en el servidor, el deploy muere ahí. Estos clear/cache
+            # solo tocan archivos en bootstrap/cache y storage/framework.
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
 
             echo "🗄️ Migraciones"
             php artisan migrate --force
