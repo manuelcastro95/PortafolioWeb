@@ -29,6 +29,36 @@
                 {{ scrapeMsg }}
             </p>
 
+            <!-- Pegar contenido de la página (cuando Workana bloquea la lectura) -->
+            <div class="mb-4">
+                <button type="button" @click="showPaste = !showPaste" class="text-sm text-primary hover:text-primary/80 font-medium">
+                    {{ showPaste ? '▲ Ocultar' : '▼ ¿Workana bloqueó la lectura? Pega el contenido de la página' }}
+                </button>
+                <div v-show="showPaste" class="mt-3 rounded-xl border border-gray-200 p-4 bg-soft/40">
+                    <p class="text-sm text-gray-500 mb-2">
+                        Abre el proyecto en tu navegador (donde sí carga), selecciona todo (Ctrl+A), copia (Ctrl+C)
+                        y pega aquí. Se extraen título, descripción, habilidades, fecha, nº de propuestas y datos del cliente.
+                    </p>
+                    <textarea
+                        v-model="pasteContent"
+                        rows="6"
+                        placeholder="Pega aquí el contenido copiado de la página del proyecto…"
+                        class="block w-full rounded-xl border-gray-300 text-sm focus:border-primary focus:ring-primary"
+                    ></textarea>
+                    <div class="flex items-center gap-3 mt-2">
+                        <button
+                            type="button"
+                            @click="parsePaste"
+                            :disabled="parsing || pasteContent.length < 20"
+                            class="inline-flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl hover:bg-primary/90 disabled:opacity-50 font-semibold text-sm"
+                        >
+                            {{ parsing ? 'Procesando…' : 'Autocompletar desde el texto' }}
+                        </button>
+                        <span v-if="pasteMsg" :class="pasteOk ? 'text-green-600' : 'text-amber-600'" class="text-sm">{{ pasteMsg }}</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
                     <InputLabel value="Título del proyecto *" />
@@ -388,18 +418,9 @@ async function scrape() {
     try {
         const { data } = await window.axios.post(route('admin.proposals.scrape'), { url: form.workana_url });
         if (data.success) {
-            const d = data.data;
-            if (d.project_title) form.project_title = d.project_title;
-            if (d.project_description) form.project_description = d.project_description;
-            if (d.skills && d.skills.length) form.skills = d.skills;
-            if (d.published_at) form.published_at = d.published_at;
-            if (d.proposals_count != null) form.proposals_count = d.proposals_count;
-            if (d.client_name) form.client_name = d.client_name;
-            if (d.client_published_projects != null) form.client_published_projects = d.client_published_projects;
-            if (d.client_paid_projects != null) form.client_paid_projects = d.client_paid_projects;
-            if (d.client_member_since) form.client_member_since = d.client_member_since;
+            const n = applyScraped(data.data);
             scrapeOk.value = true;
-            scrapeMsg.value = 'Datos extraídos. Revisa y completa lo que falte.';
+            scrapeMsg.value = `Datos extraídos (${n} campos). Revisa y completa lo que falte.`;
         } else {
             scrapeOk.value = false;
             scrapeMsg.value = reasonMessage(data.reason);
@@ -409,6 +430,51 @@ async function scrape() {
         scrapeMsg.value = 'No se pudo leer la página. Completa los datos a mano.';
     } finally {
         scraping.value = false;
+    }
+}
+
+// Vuelca los datos extraídos en el formulario y devuelve cuántos campos llenó.
+function applyScraped(d) {
+    let n = 0;
+    if (d.project_title) { form.project_title = d.project_title; n++; }
+    if (d.project_description) { form.project_description = d.project_description; n++; }
+    if (d.skills && d.skills.length) { form.skills = d.skills; n++; }
+    if (d.published_at) { form.published_at = d.published_at; n++; }
+    if (d.proposals_count != null) { form.proposals_count = d.proposals_count; n++; }
+    if (d.client_name) { form.client_name = d.client_name; n++; }
+    if (d.client_published_projects != null) { form.client_published_projects = d.client_published_projects; n++; }
+    if (d.client_paid_projects != null) { form.client_paid_projects = d.client_paid_projects; n++; }
+    if (d.client_member_since) { form.client_member_since = d.client_member_since; n++; }
+    return n;
+}
+
+// --- Pegar contenido de la página ---
+const showPaste = ref(false);
+const pasteContent = ref('');
+const parsing = ref(false);
+const pasteMsg = ref('');
+const pasteOk = ref(false);
+async function parsePaste() {
+    parsing.value = true;
+    pasteMsg.value = '';
+    try {
+        const { data } = await window.axios.post(route('admin.proposals.parse'), { content: pasteContent.value });
+        if (data.success) {
+            const n = applyScraped(data.data);
+            pasteOk.value = true;
+            pasteMsg.value = n
+                ? `Autocompletado desde el texto (${n} campos). Revisa y ajusta lo que falte.`
+                : 'No se reconoció ningún campo en el texto pegado.';
+            if (!n) pasteOk.value = false;
+        } else {
+            pasteOk.value = false;
+            pasteMsg.value = 'No se reconoció ningún campo. Pega el contenido completo de la página del proyecto.';
+        }
+    } catch (e) {
+        pasteOk.value = false;
+        pasteMsg.value = 'No se pudo procesar el texto.';
+    } finally {
+        parsing.value = false;
     }
 }
 function reasonMessage(reason) {

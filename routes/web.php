@@ -99,6 +99,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::post('/proposals', [ProposalController::class, 'store'])->name('proposals.store');
     Route::get('/proposals/rate', [ProposalController::class, 'rate'])->name('proposals.rate');
     Route::post('/proposals/scrape', [ProposalController::class, 'scrape'])->name('proposals.scrape');
+    Route::post('/proposals/parse', [ProposalController::class, 'parsePaste'])->name('proposals.parse');
     Route::post('/proposals/settings', [ProposalController::class, 'updateSettings'])->name('proposals.settings');
     Route::get('/proposals/{proposal}', [ProposalController::class, 'show'])->name('proposals.show');
     Route::get('/proposals/{proposal}/edit', [ProposalController::class, 'edit'])->name('proposals.edit');

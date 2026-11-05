@@ -110,6 +110,16 @@ class ProposalController extends Controller
     }
 
     /**
+     * Parsea el contenido que el usuario copió de la página (AJAX).
+     */
+    public function parsePaste(Request $request, WorkanaScraperService $scraper)
+    {
+        $request->validate(['content' => 'required|string']);
+
+        return response()->json($scraper->parsePasted($request->input('content')));
+    }
+
+    /**
      * Devuelve la tasa USD->COP actual (AJAX). force=1 refresca el caché.
      */
     public function rate(Request $request, CurrencyService $currency)
