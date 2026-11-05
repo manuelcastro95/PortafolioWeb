@@ -322,12 +322,13 @@ class PortfolioContentSeeder extends Seeder
                 'order' => 1,
                 'link' => 'https://kaidoc.co/',
                 'github' => null,
-                'description' => 'Plataforma colombiana de gestión documental y talento humano, hoy '
-                    . 'activa en más de setenta empresas. Un SGDEA alineado a la Ley 594 y a los '
-                    . 'lineamientos del Archivo General de la Nación, con versionado y trazabilidad de '
-                    . 'documentos, flujos de aprobación, SGI ISO 9001/14001/45001 y workflows no-code. '
-                    . 'Desarrollo sobre Laravel y Vue.',
-                'skills' => ['Laravel', 'PHP', 'Vue.js', 'MySQL'],
+                'description' => 'Plataforma SaaS empresarial de Sicap S.A.S., activa en más de setenta '
+                    . 'empresas. No es un gestor documental más: sus módulos se unen por debajo en una '
+                    . 'capa documental (ECM) transversal, donde cada proceso genera su soporte, lo '
+                    . 'clasifica bajo la tabla de retención de la empresa y lo deja trazable de punta a '
+                    . 'punta. Suma SGI ISO, Talento Humano de ciclo completo, workflows no-code y app '
+                    . 'móvil de campo. Sobre Laravel, Vue y AWS.',
+                'skills' => ['Laravel', 'PHP', 'Vue.js', 'MySQL', 'AWS S3'],
                 'images' => ['kaidoc.jpg'],
             ],
             [
