@@ -52,6 +52,7 @@ class Proposal extends Model
         'commission_cop',
         'net_cop',
         'phase_breakdown',
+        'extras_cop',
     ];
 
     /**
@@ -127,5 +128,19 @@ class Proposal extends Model
     public function getNetCopAttribute(): float
     {
         return $this->total_cop - $this->commission_cop;
+    }
+
+    /**
+     * Suma de los valores de las tareas marcadas como "Extra".
+     *
+     * NO se incluye en total_cop a propósito: en Workana no está confirmado si
+     * los extras se suman al Valor total o se muestran aparte, así que la
+     * interfaz los presenta por separado y pide confirmarlo en el formulario.
+     */
+    public function getExtrasCopAttribute(): float
+    {
+        return collect($this->workana_tasks ?? [])
+            ->filter(fn ($t) => ($t['status'] ?? null) === 'extra')
+            ->sum(fn ($t) => (float) ($t['valor'] ?? 0));
     }
 }

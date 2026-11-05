@@ -70,17 +70,44 @@
 
                         <!-- Tareas de la propuesta -->
                         <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                            <h2 class="text-lg font-bold text-dark mb-4">Tareas de la propuesta</h2>
-                            <div class="space-y-2">
-                                <div v-for="task in proposal.workana_tasks" :key="task.key" class="flex flex-col sm:flex-row sm:items-center gap-2 py-2 border-b border-gray-50">
-                                    <span class="sm:w-1/3 text-sm font-medium text-gray-700">{{ task.label }}</span>
-                                    <span class="sm:w-40">
-                                        <span :class="statusClass(task.status)" class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full">
-                                            {{ taskStatuses[task.status] }}
-                                        </span>
-                                    </span>
-                                    <span class="flex-1 text-sm text-gray-500">{{ task.note }}</span>
-                                </div>
+                            <h2 class="text-lg font-bold text-dark mb-1">Tareas de la propuesta</h2>
+                            <p class="text-sm text-gray-500 mb-4">
+                                En Workana, por cada tarea: deja en <strong>Incluido</strong>, deja en <strong>Extra</strong> con su precio,
+                                o <strong>bórrala con la ×</strong>. Las tres cosas importan: una fila a medio llenar no deja enviar.
+                            </p>
+
+                            <!-- Incluido -->
+                            <div class="mb-4">
+                                <h3 class="text-sm font-bold text-green-700 mb-2">Dejar en “Incluido” ({{ incluidas.length }})</h3>
+                                <ul v-if="incluidas.length" class="flex flex-wrap gap-2">
+                                    <li v-for="t in incluidas" :key="t.key" class="px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">{{ t.label }}</li>
+                                </ul>
+                                <p v-else class="text-sm text-gray-400">—</p>
+                            </div>
+
+                            <!-- Extra -->
+                            <div class="mb-4">
+                                <h3 class="text-sm font-bold text-amber-700 mb-2">Dejar en “Extra” con su precio ({{ extras.length }})</h3>
+                                <ul v-if="extras.length" class="space-y-1">
+                                    <li v-for="t in extras" :key="t.key" class="flex justify-between text-sm">
+                                        <span class="text-gray-700">{{ t.label }}</span>
+                                        <span class="font-semibold text-amber-700">{{ fmtCop(t.valor) }}</span>
+                                    </li>
+                                </ul>
+                                <p v-else class="text-sm text-gray-400">—</p>
+                                <p v-if="extras.length" class="text-xs text-gray-500 mt-2 border-t border-gray-100 pt-2">
+                                    Suma de extras: <strong>{{ fmtCop(proposal.extras_cop) }}</strong>.
+                                    <span class="text-amber-600">Confirma en el formulario de Workana si se suman al Valor total o van aparte.</span>
+                                </p>
+                            </div>
+
+                            <!-- Borrar -->
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-500 mb-2">Borrar con la × ({{ borrar.length }})</h3>
+                                <ul v-if="borrar.length" class="flex flex-wrap gap-2">
+                                    <li v-for="t in borrar" :key="t.key" class="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-500 line-through">{{ t.label }}</li>
+                                </ul>
+                                <p v-else class="text-sm text-gray-400">Ninguna: todas las tareas van en la propuesta.</p>
                             </div>
                         </div>
                     </div>
@@ -134,19 +161,19 @@ const props = defineProps({
     proposal: Object,
     statuses: Object,
     taskStatuses: Object,
+    allTasks: { type: Array, default: () => [] },
+});
+
+const incluidas = computed(() => (props.proposal.workana_tasks || []).filter((t) => t.status === 'incluido'));
+const extras = computed(() => (props.proposal.workana_tasks || []).filter((t) => t.status === 'extra'));
+const borrar = computed(() => {
+    const present = new Set((props.proposal.workana_tasks || []).map((t) => t.key));
+    return props.allTasks.filter((t) => !present.has(t.key));
 });
 
 const fmtCop = (n) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0);
 
 const belowTarget = computed(() => Number(props.proposal.effective_hourly_usd) < Number(props.proposal.hourly_rate_usd));
-
-function statusClass(status) {
-    return {
-        incluido: 'bg-green-100 text-green-800',
-        no_incluido: 'bg-gray-100 text-gray-600',
-        costo_adicional: 'bg-amber-100 text-amber-800',
-    }[status] || 'bg-gray-100 text-gray-600';
-}
 
 function changeStatus(event) {
     const status = event.target.value;
