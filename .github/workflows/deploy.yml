@@ -27,6 +27,24 @@ jobs:
 
             cd ${{ secrets.APP_PATH }}
 
+            # storage y bootstrap/cache son de www-data para que la app pueda
+            # escribir en caliente, pero composer, npm y artisan corren aquí
+            # como el usuario SSH y también necesitan escribir ahí. Sin esto,
+            # composer install falla en package:discover con "Permission denied".
+            devolver_permisos() {
+              echo "🔐 Devolviendo storage y bootstrap/cache a www-data"
+              sudo chown -R www-data:www-data storage bootstrap/cache
+              sudo chmod -R 775 storage bootstrap/cache
+            }
+
+            # El trap corre pase lo que pase: si un paso falla a mitad de camino,
+            # las carpetas no se quedan en manos del usuario SSH, que dejaría el
+            # sitio sin poder escribir logs ni sesiones.
+            trap devolver_permisos EXIT
+
+            echo "🔓 Tomando storage y bootstrap/cache para el build"
+            sudo chown -R "$(id -un):$(id -gn)" storage bootstrap/cache
+
             echo "📥 Actualizando código"
             git fetch origin
             git checkout main
@@ -46,9 +64,7 @@ jobs:
             echo "🗄️ Migraciones"
             php artisan migrate --force
 
-            echo "🔐 Permisos"
-            sudo chown -R www-data:www-data storage bootstrap/cache
-            sudo chmod -R 775 storage bootstrap/cache
-
+            # Los permisos los restaura el trap de arriba, tanto si llegamos
+            # hasta aquí como si algún paso falló antes.
             echo "🚀 DEPLOY OK"
           EOF
