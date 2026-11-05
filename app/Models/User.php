@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use App\Support\StorageDisk;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -65,14 +66,8 @@ class User extends Authenticatable
             return $this->profile_image;
         }
 
-        // Determinar qué disco usar
-        $diskName = config('filesystems.default');
-        if (env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET')) {
-            $diskName = 's3';
-        }
-
         // Obtener la URL del archivo (permanente si es público en S3)
-        return Storage::disk($diskName)->temporaryUrl($this->profile_image, now()->addMinutes(45));
+        return Storage::disk(StorageDisk::name())->temporaryUrl($this->profile_image, now()->addMinutes(45));
     }
 
     /**
@@ -89,13 +84,7 @@ class User extends Authenticatable
             return $this->cv_file;
         }
 
-        // Determinar qué disco usar
-        $diskName = config('filesystems.default');
-        if (env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET')) {
-            $diskName = 's3';
-        }
-
         // Obtener la URL del archivo (permanente si es público en S3)
-        return Storage::disk($diskName)->temporaryUrl($this->cv_file, now()->addMinutes(45));
+        return Storage::disk(StorageDisk::name())->temporaryUrl($this->cv_file, now()->addMinutes(45));
     }
 }

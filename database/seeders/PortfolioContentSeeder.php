@@ -4,7 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\Project;
 use App\Models\Skill;
+use App\Support\StorageDisk;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -25,8 +27,19 @@ class PortfolioContentSeeder extends Seeder
      */
     private const REMOTE_DIR = 'projects/seed';
 
+    /**
+     * Proyectos que una versión anterior de este seeder creó con un título
+     * que duplicaba uno ya existente. Se eliminan para no mostrar el mismo
+     * trabajo dos veces.
+     */
+    private const TITULOS_OBSOLETOS = [
+        'Control de Asistencias QR' => 'Control Asistencias',
+    ];
+
     public function run(): void
     {
+        $this->unificarSkillsDuplicadas();
+
         foreach ($this->projects() as $data) {
             $project = Project::updateOrCreate(
                 ['title' => $data['title']],
@@ -45,10 +58,74 @@ class PortfolioContentSeeder extends Seeder
 
             $this->command->info("✓ {$data['type']}: {$data['title']}");
         }
+
+        // Va al final: comprueba que el proyecto vigente exista antes de
+        // borrar el duplicado, y ese vigente lo acaba de crear el bucle.
+        $this->borrarProyectosObsoletos();
     }
 
     /**
-     * Devuelve los ids de las skills, creando las que falten.
+     * Borra los proyectos que una versión previa de este seeder duplicó,
+     * pero solo si el proyecto original con el que chocaban sigue ahí.
+     */
+    private function borrarProyectosObsoletos(): void
+    {
+        foreach (self::TITULOS_OBSOLETOS as $obsoleto => $vigente) {
+            if (! Project::where('title', $vigente)->exists()) {
+                continue;
+            }
+
+            Project::where('title', $obsoleto)->get()->each(function (Project $p) use ($obsoleto) {
+                $p->skills()->detach();
+                $p->images()->delete();
+                $p->delete();
+                $this->command->warn("· duplicado eliminado: {$obsoleto}");
+            });
+        }
+    }
+
+    /**
+     * Une skills que son la misma escrita distinto ("VUE JS" y "Vue.js").
+     *
+     * Una versión previa buscaba por nombre exacto y creó variantes nuevas
+     * en lugar de reutilizar las que ya existían. Se conserva la que tiene
+     * icono (o la más antigua), se le repuntan las relaciones y se borra
+     * el resto.
+     */
+    private function unificarSkillsDuplicadas(): void
+    {
+        Skill::orderBy('id')->get()
+            ->groupBy(fn (Skill $s) => $this->normalizar($s->name))
+            ->filter(fn ($grupo) => $grupo->count() > 1)
+            ->each(function ($grupo) {
+                $conservar = $grupo->first(fn (Skill $s) => ! empty($s->icon)) ?? $grupo->first();
+
+                foreach ($grupo as $skill) {
+                    if ($skill->id === $conservar->id) {
+                        continue;
+                    }
+
+                    // Repuntar la tabla pivote sin crear parejas repetidas.
+                    foreach (DB::table('project_skill')->where('skill_id', $skill->id)->get() as $fila) {
+                        $yaExiste = DB::table('project_skill')
+                            ->where('project_id', $fila->project_id)
+                            ->where('skill_id', $conservar->id)
+                            ->exists();
+
+                        $yaExiste
+                            ? DB::table('project_skill')->where('id', $fila->id)->delete()
+                            : DB::table('project_skill')->where('id', $fila->id)->update(['skill_id' => $conservar->id]);
+                    }
+
+                    $this->command->warn("· skill unificada: \"{$skill->name}\" → \"{$conservar->name}\"");
+                    $skill->delete();
+                }
+            });
+    }
+
+    /**
+     * Devuelve los ids de las skills, reutilizando las que ya existan aunque
+     * estén escritas distinto, y creando solo las que falten de verdad.
      *
      * Las skills nuevas se crean con is_active = false a propósito: sirven
      * como etiqueta en las tarjetas de proyecto (la relación no filtra por
@@ -58,19 +135,60 @@ class PortfolioContentSeeder extends Seeder
      */
     private function skillIds(array $names): array
     {
+        $existentes = Skill::orderBy('id')->get();
+
         return collect($names)
-            ->map(fn (string $name) => Skill::firstOrCreate(
-                ['name' => $name],
-                ['is_active' => false, 'order' => 99]
-            )->id)
+            ->map(function (string $name) use (&$existentes) {
+                $ya = $existentes->first(
+                    fn (Skill $s) => $this->normalizar($s->name) === $this->normalizar($name)
+                );
+
+                if ($ya) {
+                    return $ya->id;
+                }
+
+                $nueva = Skill::create(['name' => $name, 'is_active' => false, 'order' => 99]);
+                $existentes->push($nueva);
+
+                return $nueva->id;
+            })
             ->all();
     }
 
     /**
+     * "Vue.js", "VUE JS" y "vuejs" son la misma skill.
+     */
+    private function normalizar(string $name): string
+    {
+        return preg_replace('/[^a-z0-9]/', '', mb_strtolower($name));
+    }
+
+    /**
      * Sube las imágenes que falten y las asocia al proyecto.
+     *
+     * Si el proyecto ya tiene imágenes cargadas desde el panel, esas son las
+     * del usuario y mandan: el seeder no agrega las suyas y retira las que
+     * hubiera puesto antes. Así una instalación nueva queda con imágenes y
+     * una que ya tenía las propias no termina con el carrusel duplicado.
      */
     private function syncImages(Project $project, array $files): void
     {
+        $tieneLasSuyas = $project->images()
+            ->where('image_path', 'not like', self::REMOTE_DIR . '/%')
+            ->exists();
+
+        if ($tieneLasSuyas) {
+            $retiradas = $project->images()
+                ->where('image_path', 'like', self::REMOTE_DIR . '/%')
+                ->delete();
+
+            if ($retiradas) {
+                $this->command->warn("  · {$retiradas} imagen(es) del seeder retiradas: el proyecto ya tiene las suyas");
+            }
+
+            return;
+        }
+
         $disk = $this->diskName();
 
         foreach (array_values($files) as $order => $file) {
@@ -107,15 +225,9 @@ class PortfolioContentSeeder extends Seeder
             ->delete();
     }
 
-    /**
-     * Mismo criterio que ProjectController y los modelos: S3 si hay
-     * credenciales, si no el disco por defecto.
-     */
     private function diskName(): string
     {
-        return env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET')
-            ? 's3'
-            : config('filesystems.default');
+        return StorageDisk::name();
     }
 
     private function projects(): array
@@ -125,7 +237,9 @@ class PortfolioContentSeeder extends Seeder
             // Proyectos propios
             // ---------------------------------------------------------------
             [
-                'title' => 'Control de Asistencias QR',
+                // El título debe coincidir con el que ya existe en producción,
+                // o updateOrCreate crea una segunda fila del mismo proyecto.
+                'title' => 'Control Asistencias',
                 'type' => 'proyecto',
                 'order' => 1,
                 'link' => null,

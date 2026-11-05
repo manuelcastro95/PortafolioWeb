@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Support\StorageDisk;
+
 use App\Http\Controllers\Controller;
 use App\Models\Skill;
 use Illuminate\Http\Request;
@@ -33,7 +35,7 @@ class SkillController extends Controller
         ]);
 
         if ($request->hasFile('icon')) {
-            $diskName = env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET') ? 's3' : config('filesystems.default');
+            $diskName = StorageDisk::name();
             $path = $request->file('icon')->store('skills', $diskName);
             if ($diskName === 's3') {
                 Storage::disk($diskName)->setVisibility($path, 'public');
@@ -57,7 +59,7 @@ class SkillController extends Controller
         ]);
 
         if ($request->hasFile('icon')) {
-            $diskName = env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET') ? 's3' : config('filesystems.default');
+            $diskName = StorageDisk::name();
             if ($skill->icon) {
                 Storage::disk($diskName)->delete($skill->icon);
             }
@@ -77,7 +79,7 @@ class SkillController extends Controller
     public function destroy(Skill $skill)
     {
         if ($skill->icon) {
-            $diskName = env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET') ? 's3' : config('filesystems.default');
+            $diskName = StorageDisk::name();
             Storage::disk($diskName)->delete($skill->icon);
         }
         

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Support\StorageDisk;
+
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Skill;
@@ -71,7 +73,7 @@ class ProjectController extends Controller
         }
 
         if ($request->hasFile('images')) {
-            $diskName = env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET') ? 's3' : config('filesystems.default');
+            $diskName = StorageDisk::name();
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('projects', $diskName);
                 if ($diskName === 's3') {
@@ -140,7 +142,7 @@ class ProjectController extends Controller
         }
 
         if (isset($validated['delete_images'])) {
-            $diskName = env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET') ? 's3' : config('filesystems.default');
+            $diskName = StorageDisk::name();
             foreach ($validated['delete_images'] as $imageId) {
                 $image = $project->images()->find($imageId);
                 if ($image) {
@@ -151,7 +153,7 @@ class ProjectController extends Controller
         }
 
         if ($request->hasFile('images')) {
-            $diskName = env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET') ? 's3' : config('filesystems.default');
+            $diskName = StorageDisk::name();
             $maxOrder = $project->images()->max('order') ?? -1;
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('projects', $diskName);
@@ -172,7 +174,7 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
-        $diskName = env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET') ? 's3' : config('filesystems.default');
+        $diskName = StorageDisk::name();
         foreach ($project->images as $image) {
             Storage::disk($diskName)->delete($image->image_path);
         }

@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Support\StorageDisk;
 
 class ProfileController extends Controller
 {
@@ -65,14 +66,10 @@ class ProfileController extends Controller
             'whatsapp' => $validated['whatsapp'] ?? null,
         ];
 
-        // Obtener el disco configurado (s3 si está configurado, sino local)
-        $diskName = env('FILESYSTEM_DISK', 'local');
-        
-        // Si S3 está configurado, usarlo; sino usar local
-        if (env('AWS_ACCESS_KEY_ID') && env('AWS_SECRET_ACCESS_KEY') && env('AWS_BUCKET')) {
-            $diskName = 's3';
-        }
-        
+        // Mismo disco que usan los modelos para construir la URL. Se resuelve
+        // en un único sitio: si aquí se decide distinto que en User, el archivo
+        // se guarda en un disco y el enlace apunta al otro.
+        $diskName = StorageDisk::name();
         $disk = Storage::disk($diskName);
 
         // Manejar imagen de perfil

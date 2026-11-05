@@ -28,7 +28,7 @@
                         text-base sm:text-lg lg:text-xl 
                         text-gray-700 leading-relaxed
                     ">
-                        {{ user?.bio || 'Desarrollador FullStack con más de 3 años de experiencia especializado en el diseño e implementación de soluciones web empresariales. Destaco por mi capacidad para crear aplicaciones robustas y escalables, con un fuerte enfoque en la arquitectura limpia y las mejores prácticas de desarrollo.' }}
+                        {{ user?.bio || 'Desarrollador FullStack con más de 5 años de experiencia, enfocado en backend con PHP y Laravel, diseño de APIs RESTful y modelado de bases de datos en MySQL. En frontend trabajo con Vue.js y con React y TypeScript.' }}
                     </p>
                 </div>
 
