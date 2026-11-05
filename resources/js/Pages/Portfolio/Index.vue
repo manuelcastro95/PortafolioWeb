@@ -21,7 +21,7 @@
                             ¡Hola, soy <span class="text-primary">{{ user?.name || 'Manuel Castro' }}</span>!
                         </h1>
                         <div class="text-2xl sm:text-3xl lg:text-4xl font-semibold text-dark">
-                            Desarrollador <TypeWriter :words="['web', 'front-end', 'back-end']" :delay="2000" />
+                            Desarrollador <TypeWriter :words="['FullStack', 'back-end', 'front-end']" :delay="2000" />
                         </div>
                     </div>
                     <p class="
