@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             ProfileSeeder::class,
             PortfolioContentSeeder::class,
+            ProposalCatalogSeeder::class,
+            ProposalExampleSeeder::class,
         ]);
     }
 }
