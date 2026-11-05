@@ -11,6 +11,7 @@ use App\Services\CurrencyService;
 use App\Services\WorkanaScraperService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class ProposalController extends Controller
@@ -64,6 +65,7 @@ class ProposalController extends Controller
             'proposal' => $proposal,
             'statuses' => config('proposals.statuses'),
             'taskStatuses' => config('proposals.task_statuses'),
+            'allTasks' => config('proposals.workana_tasks'),
         ]);
     }
 
@@ -184,14 +186,23 @@ class ProposalController extends Controller
             'workana_tasks' => 'nullable|array',
             'workana_tasks.*.key' => 'required|string',
             'workana_tasks.*.label' => 'required|string',
-            'workana_tasks.*.status' => 'required|in:incluido,no_incluido,costo_adicional',
-            'workana_tasks.*.note' => 'nullable|string|max:255',
+            'workana_tasks.*.status' => 'required|in:incluido,extra',
+            'workana_tasks.*.valor' => 'nullable|numeric|min:0',
             'text_blocks' => 'nullable|array',
             'details_text' => 'nullable|string',
             'delivery_time' => 'nullable|string|max:120',
             'status' => 'required|in:borrador,enviada,en_conversacion,ganada,perdida',
             'sent_at' => 'nullable|date',
         ]);
+
+        // Una tarea "Extra" exige un valor > 0, igual que lo valida Workana.
+        foreach ($validated['workana_tasks'] ?? [] as $i => $task) {
+            if (($task['status'] ?? null) === 'extra' && (float) ($task['valor'] ?? 0) < 1) {
+                throw ValidationException::withMessages([
+                    "workana_tasks.$i.valor" => 'Una tarea Extra necesita un valor en COP mayor que 0.',
+                ]);
+            }
+        }
 
         return $validated;
     }

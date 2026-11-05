@@ -104,25 +104,33 @@
     </table>
 
     @php
-        $relevantTasks = collect($proposal->workana_tasks ?? [])->filter(fn ($t) => ($t['status'] ?? 'no_incluido') !== 'no_incluido');
+        $incluidas = collect($proposal->workana_tasks ?? [])->where('status', 'incluido');
+        $extras = collect($proposal->workana_tasks ?? [])->where('status', 'extra');
     @endphp
-    @if($relevantTasks->isNotEmpty())
-        <h2>Qué incluye</h2>
+    @if($incluidas->isNotEmpty() || $extras->isNotEmpty())
+        <h2>Qué incluye el precio</h2>
         <table>
             <tbody>
-                @foreach($relevantTasks as $task)
+                @foreach($incluidas as $task)
                     <tr>
-                        <td style="width: 32%">{{ $task['label'] }}</td>
-                        <td style="width: 18%">
-                            <span class="badge {{ $task['status'] === 'incluido' ? 'b-inc' : 'b-add' }}">
-                                {{ $taskStatuses[$task['status']] ?? $task['status'] }}
-                            </span>
-                        </td>
-                        <td>{{ $task['note'] ?? '' }}</td>
+                        <td>{{ $task['label'] }}</td>
+                        <td style="width: 28%"><span class="badge b-inc">Incluido</span></td>
+                    </tr>
+                @endforeach
+                @foreach($extras as $task)
+                    <tr>
+                        <td>{{ $task['label'] }}</td>
+                        <td style="width: 28%" class="right"><span class="badge b-add">Extra</span> &nbsp; {{ $cop($task['valor'] ?? 0) }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
+        @if($extras->isNotEmpty())
+            <p class="muted" style="font-size: 10px; margin-top: 4px;">
+                Los valores marcados como “Extra” se cotizan aparte del valor de las fases
+                (suma de extras: {{ $cop($proposal->extras_cop) }}).
+            </p>
+        @endif
     @endif
 
     @if($proposal->details_text)

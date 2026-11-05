@@ -22,7 +22,7 @@ class ProposalExampleSeeder extends Seeder
         $phases = [
             [
                 'name' => 'Núcleo del sistema',
-                'amount_cop' => 3500000,
+                'amount_cop' => 2800000,
                 'items' => [
                     ['description' => 'Autenticación y roles (admin / cliente)', 'hours' => 4],
                     ['description' => 'CRUD de diseños y catálogo', 'hours' => 12],
@@ -34,7 +34,7 @@ class ProposalExampleSeeder extends Seeder
             ],
             [
                 'name' => 'Cobro y pagos',
-                'amount_cop' => 1500000,
+                'amount_cop' => 1200000,
                 'items' => [
                     ['description' => 'Integración con pasarela de pago', 'hours' => 15],
                     ['description' => 'Notificaciones por correo (compra / entrega)', 'hours' => 6],
@@ -43,7 +43,7 @@ class ProposalExampleSeeder extends Seeder
             ],
             [
                 'name' => 'Reportes',
-                'amount_cop' => 1200000,
+                'amount_cop' => 950000,
                 'items' => [
                     ['description' => 'Reportes y exportación (PDF/Excel)', 'hours' => 8],
                     ['description' => 'Dashboard de ventas', 'hours' => 7],
@@ -52,34 +52,27 @@ class ProposalExampleSeeder extends Seeder
             ],
         ];
 
-        $taskStatuses = [
-            'archivo_fuente' => ['incluido', 'Entrego el código fuente completo.'],
-            'hosting' => ['costo_adicional', 'Puedo configurarlo; el costo del servicio corre por tu cuenta.'],
-            'dominio' => ['costo_adicional', 'Lo configuro; la compra del dominio corre por tu cuenta.'],
-            'ssl' => ['incluido', 'Certificado Let\'s Encrypt incluido.'],
-            'chat' => ['no_incluido', ''],
-            'subir_contenido' => ['no_incluido', 'La carga del catálogo inicial la hace tu equipo.'],
-            'pasarela_pago' => ['incluido', 'Integración con una pasarela (Stripe / MercadoPago / Wompi).'],
-            'kit_redes' => ['no_incluido', ''],
-            'whatsapp_redes' => ['no_incluido', ''],
-            'revision_extra' => ['costo_adicional', 'Dos rondas de ajustes incluidas; adicionales por hora.'],
-            'diseno_adaptativo' => ['incluido', 'Interfaz responsive para escritorio y móvil.'],
-            'api_integration' => ['no_incluido', ''],
-            'speed_optimized' => ['incluido', 'Buenas prácticas de rendimiento desde el inicio.'],
-            'seo_structure' => ['no_incluido', ''],
+        // Solo las tareas que SÍ van en la propuesta. Las demás (Hosting,
+        // Dominio, Chat, Subir el contenido, Integración con pasarela de pago,
+        // Kit para redes sociales, API Integration, SEO structure) se omiten:
+        // en Workana se borran con la ×.
+        $labels = collect(config('proposals.workana_tasks'))->keyBy('key');
+        $tareas = [
+            ['archivo_fuente', 'incluido', null],
+            ['ssl', 'incluido', null],
+            ['whatsapp_redes', 'incluido', null],
+            ['diseno_adaptativo', 'incluido', null],
+            ['speed_optimized', 'incluido', null],
+            ['revision_extra', 'extra', 200000],
         ];
+        $workanaTasks = collect($tareas)->map(fn ($t) => [
+            'key' => $t[0],
+            'label' => $labels[$t[0]]['label'] ?? $t[0],
+            'status' => $t[1],
+            'valor' => $t[2],
+        ])->all();
 
-        $workanaTasks = collect(config('proposals.workana_tasks'))->map(function ($task) use ($taskStatuses) {
-            [$status, $note] = $taskStatuses[$task['key']] ?? ['no_incluido', ''];
-            return [
-                'key' => $task['key'],
-                'label' => $task['label'],
-                'status' => $status,
-                'note' => $note,
-            ];
-        })->all();
-
-        $details = $this->buildDetails($textBlocks, $phases);
+        $details = $this->buildDetails($textBlocks, $phases, $workanaTasks);
 
         Proposal::updateOrCreate(
             ['project_title' => $title],
@@ -110,7 +103,7 @@ class ProposalExampleSeeder extends Seeder
         );
     }
 
-    private function buildDetails(array $blocks, array $phases): string
+    private function buildDetails(array $blocks, array $phases, array $tasks = []): string
     {
         $parts = [];
 
@@ -127,6 +120,23 @@ class ProposalExampleSeeder extends Seeder
             }
         }
         $parts[] = trim($fases);
+
+        // Qué entra en el precio y qué es adicional (no hay notas en Workana,
+        // así que esto se comunica en el texto de Detalles).
+        $incluidas = collect($tasks)->where('status', 'incluido')->pluck('label');
+        $extras = collect($tasks)->where('status', 'extra');
+        if ($incluidas->isNotEmpty() || $extras->isNotEmpty()) {
+            $qe = "Qué entra en el precio y qué no:\n";
+            if ($incluidas->isNotEmpty()) {
+                $qe .= "\nIncluido: " . $incluidas->implode(', ') . '.';
+            }
+            if ($extras->isNotEmpty()) {
+                $qe .= "\nCon costo adicional: " . $extras->map(
+                    fn ($t) => $t['label'] . ' (CO$ ' . number_format((float) $t['valor'], 0, ',', '.') . ')'
+                )->implode(', ') . '.';
+            }
+            $parts[] = trim($qe);
+        }
 
         if (isset($blocks['como_trabaja'])) {
             $parts[] = $blocks['como_trabaja']['content'];

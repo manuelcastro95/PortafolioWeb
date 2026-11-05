@@ -30,11 +30,14 @@ return [
     |--------------------------------------------------------------------------
     | Estados de las tareas
     |--------------------------------------------------------------------------
+    | El formulario real de Workana solo ofrece dos opciones por tarea:
+    | "Incluido" o "Extra" (con un valor en COP obligatorio). Las tareas que no
+    | aplican NO se dejan en un tercer estado: se quitan de la propuesta (en
+    | Workana se borra la fila con la ×).
     */
     'task_statuses' => [
         'incluido' => 'Incluido',
-        'no_incluido' => 'No incluido',
-        'costo_adicional' => 'Costo adicional',
+        'extra' => 'Extra',
     ],
 
     /*

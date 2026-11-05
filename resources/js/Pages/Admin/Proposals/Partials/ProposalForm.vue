@@ -221,15 +221,50 @@
 
         <!-- 5. Tareas de la propuesta -->
         <section class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-            <h2 class="text-xl font-bold text-dark mb-4">5. Tareas de la propuesta (Workana)</h2>
+            <h2 class="text-xl font-bold text-dark mb-1">5. Tareas de la propuesta (Workana)</h2>
+            <p class="text-sm text-gray-500 mb-4">
+                Workana solo permite <strong>Incluido</strong> o <strong>Extra</strong> por tarea (no hay notas).
+                Un <strong>Extra</strong> exige un valor en CO$. Lo que no ofreces, <strong>quítalo con la ×</strong>
+                (en el formulario de Workana esas filas se borran).
+            </p>
+
             <div class="space-y-2">
-                <div v-for="(task, ti) in form.workana_tasks" :key="task.key" class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center py-2 border-b border-gray-50">
-                    <span class="md:col-span-3 text-sm font-medium text-gray-700">{{ task.label }}</span>
-                    <select v-model="task.status" class="md:col-span-3 rounded-lg border-gray-300 text-sm py-1.5 focus:border-primary focus:ring-primary">
+                <div v-for="(task, ti) in form.workana_tasks" :key="task.key" class="flex flex-wrap items-center gap-2 py-2 border-b border-gray-50">
+                    <span class="w-full sm:w-1/3 text-sm font-medium text-gray-700">{{ task.label }}</span>
+                    <select v-model="task.status" class="rounded-lg border-gray-300 text-sm py-1.5 focus:border-primary focus:ring-primary">
                         <option v-for="(label, val) in taskStatuses" :key="val" :value="val">{{ label }}</option>
                     </select>
-                    <input v-model="task.note" type="text" placeholder="Nota (opcional)" class="md:col-span-6 rounded-lg border-gray-300 text-sm py-1.5 focus:border-primary focus:ring-primary" />
+                    <div v-if="task.status === 'extra'" class="flex items-center gap-1">
+                        <span class="text-sm text-gray-500">CO$</span>
+                        <input
+                            v-model="task.valor"
+                            type="number"
+                            min="1"
+                            placeholder="valor"
+                            :class="[
+                                'w-32 rounded-lg text-sm py-1.5 focus:ring-primary',
+                                extraSinValor(task) ? 'border-red-400 focus:border-red-400' : 'border-gray-300 focus:border-primary'
+                            ]"
+                        />
+                        <span v-if="extraSinValor(task)" class="text-xs text-red-500">no debe ser menor que 1</span>
+                    </div>
+                    <button type="button" @click="removeTask(ti)" class="ml-auto text-gray-400 hover:text-red-600 text-sm" title="Quitar tarea">✕ Quitar</button>
                 </div>
+            </div>
+
+            <div v-if="form.workana_tasks.length === 0" class="text-sm text-gray-400 py-3">
+                No hay tareas en la propuesta. Agrega las que apliquen.
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
+                <select v-if="removedTasks.length" @change="addTask($event)" class="rounded-lg border-gray-300 text-sm py-1.5 focus:border-primary focus:ring-primary">
+                    <option value="">+ Agregar tarea…</option>
+                    <option v-for="t in removedTasks" :key="t.key" :value="t.key">{{ t.label }}</option>
+                </select>
+                <p v-if="extrasTotal > 0" class="text-sm text-gray-600">
+                    Suma de extras: <strong>{{ fmtCop(extrasTotal) }}</strong>
+                    <span class="text-amber-600"> · Confirma en Workana si se suman al Valor total o van aparte.</span>
+                </p>
             </div>
         </section>
 
@@ -264,11 +299,14 @@
         </section>
 
         <!-- Acciones -->
-        <div class="flex justify-end gap-3">
+        <div class="flex flex-col sm:flex-row justify-end items-center gap-3">
+            <p v-if="extrasInvalid" class="text-sm text-red-600 mr-auto">
+                Hay una tarea <strong>Extra</strong> sin valor. Ponle un valor en CO$ o quítala con la ×.
+            </p>
             <Link :href="route('admin.proposals.index')" class="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold">
                 Cancelar
             </Link>
-            <button type="submit" :disabled="form.processing" class="bg-primary text-white px-8 py-3 rounded-xl hover:bg-primary/90 shadow-lg font-semibold disabled:opacity-50">
+            <button type="submit" :disabled="form.processing || extrasInvalid" class="bg-primary text-white px-8 py-3 rounded-xl hover:bg-primary/90 shadow-lg font-semibold disabled:opacity-50">
                 {{ proposal ? 'Guardar cambios' : 'Crear propuesta' }}
             </button>
         </div>
@@ -306,9 +344,16 @@ function initTextBlocks() {
 
 function initTasks() {
     if (props.proposal?.workana_tasks && props.proposal.workana_tasks.length) {
-        return JSON.parse(JSON.stringify(props.proposal.workana_tasks));
+        // Normaliza datos antiguos (3 estados + nota) al esquema nuevo.
+        return JSON.parse(JSON.stringify(props.proposal.workana_tasks))
+            .map((t) => {
+                let status = t.status === 'costo_adicional' ? 'extra' : t.status;
+                return { key: t.key, label: t.label, status, valor: t.valor ?? null };
+            })
+            .filter((t) => t.status === 'incluido' || t.status === 'extra');
     }
-    return props.workanaTasks.map((t) => ({ key: t.key, label: t.label, status: 'no_incluido', note: '' }));
+    // Propuesta nueva: todas presentes como "Incluido"; se quitan las que no apliquen.
+    return props.workanaTasks.map((t) => ({ key: t.key, label: t.label, status: 'incluido', valor: null }));
 }
 
 const p = props.proposal;
@@ -365,6 +410,30 @@ const commissionCop = computed(() => Math.round(totalCop.value * (parseFloat(for
 const netCop = computed(() => totalCop.value - commissionCop.value);
 
 const fmtCop = (n) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0);
+
+// --- Tareas de la propuesta (Workana) ---
+function extraSinValor(task) {
+    return task.status === 'extra' && (task.valor === null || task.valor === '' || Number(task.valor) < 1);
+}
+const extrasTotal = computed(() =>
+    form.workana_tasks.filter((t) => t.status === 'extra').reduce((s, t) => s + (parseFloat(t.valor) || 0), 0)
+);
+const removedTasks = computed(() => {
+    const present = new Set(form.workana_tasks.map((t) => t.key));
+    return props.workanaTasks.filter((t) => !present.has(t.key));
+});
+const extrasInvalid = computed(() => form.workana_tasks.some((t) => extraSinValor(t)));
+function removeTask(i) {
+    form.workana_tasks.splice(i, 1);
+}
+function addTask(event) {
+    const key = event.target.value;
+    event.target.value = '';
+    const t = props.workanaTasks.find((x) => x.key === key);
+    if (t && !form.workana_tasks.some((x) => x.key === key)) {
+        form.workana_tasks.push({ key: t.key, label: t.label, status: 'incluido', valor: null });
+    }
+}
 
 // --- Fases ---
 function addPhase() {
@@ -501,6 +570,17 @@ function generateDetails() {
         });
         parts.push(fases.trim());
     }
+
+    // Qué entra en el precio y qué es adicional (en Workana no hay notas).
+    const inc = form.workana_tasks.filter((t) => t.status === 'incluido').map((t) => t.label);
+    const ext = form.workana_tasks.filter((t) => t.status === 'extra');
+    if (inc.length || ext.length) {
+        let qe = 'Qué entra en el precio y qué no:';
+        if (inc.length) qe += '\nIncluido: ' + inc.join(', ') + '.';
+        if (ext.length) qe += '\nCon costo adicional: ' + ext.map((t) => `${t.label} (${fmtCop(t.valor)})`).join(', ') + '.';
+        parts.push(qe);
+    }
+
     if (b.como_trabaja?.content) parts.push(b.como_trabaja.content);
     if (b.stack?.content) parts.push('Stack: ' + b.stack.content);
     if (b.enlaces?.content) parts.push(b.enlaces.content);
